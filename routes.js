@@ -15,6 +15,7 @@ module.exports = function (app, db){
       
         app.route('/')
           .get((req, res) => {
+          console.log("hello")
             res.render(process.cwd() + '/views/pug/index');
           });
 
