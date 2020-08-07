@@ -1,34 +1,33 @@
-// server.js
-// where your node app starts
+"use strict";
 
-// we've started you off with Express (https://expressjs.com/)
-// but feel free to use whatever libraries or frameworks you'd like through `package.json`.
 const express = require("express");
+const bodyParser = require("body-parser");
+const mongo = require("mongodb").MongoClient;
+const routes = require("./routes.js");
+const auth = require("./auth.js");
 const app = express();
 
-// our default array of dreams
-const dreams = [
-  "Find and count some sheep",
-  "Climb a really tall mountain",
-  "Wash the dishes"
-];
+app.use("/public", express.static(process.cwd() + "/public"));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// make all the files in 'public' available
-// https://expressjs.com/en/starter/static-files.html
-app.use(express.static("public"));
+app.set("view engine", "pug");
 
-// https://expressjs.com/en/starter/basic-routing.html
-app.get("/", (request, response) => {
-  response.sendFile(__dirname + "/views/index.html");
-});
+mongo.connect(process.env.MONGO_URI, (err, client) => {
+  var db = client.db("socialusers");
+  if (err) {
+    console.log("Database error: " + err);
+  } else {
+    console.log("Successful database connection");
 
-// send the default array of dreams to the webpage
-app.get("/dreams", (request, response) => {
-  // express helps us take JS objects and send them as JSON
-  response.json(dreams);
-});
+    //Import authentication logic
+    auth(app, db);
 
-// listen for requests :)
-const listener = app.listen(process.env.PORT, () => {
-  console.log("Your app is listening on port " + listener.address().port);
+    //Import the routes
+    routes(app, db);
+
+    app.listen(process.env.PORT || 3000, () => {
+      console.log("Listening on port " + process.env.PORT);
+    });
+  }
 });
